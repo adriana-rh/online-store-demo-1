@@ -61,11 +61,13 @@ class ExpiredCreditCard extends CreditCardError {
 module.exports = function charge (request) {
   const { amount, credit_card: creditCard } = request;
   const cardNumber = creditCard.credit_card_number;
-  const cardInfo = cardValidator(cardNumber);
-  const {
-    card_type: cardType,
-    valid
-  } = cardInfo.getCardDetails();
+  let cardType, valid;
+  try {
+    ({ card_type: cardType, valid } = cardValidator(cardNumber).getCardDetails());
+  } catch (err) {
+    // simple-card-validator throws a bare string for empty/missing numbers.
+    throw new InvalidCreditCard();
+  }
 
   if (!valid) { throw new InvalidCreditCard(); }
 
